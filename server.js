@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const DB_FILE = path.join(__dirname, 'local-db.json');
-const PUBLIC_DIR = path.join(__dirname, 'public');
+const PUBLIC_DIR = __dirname;
 const PORT = process.env.PORT || 8787;
 
 function seedPlayers(){
@@ -160,13 +160,13 @@ var server = http.createServer(function(req, res){
     });
     return;
   }
-  var reqPath = req.url === '/' ? '/index.html' : req.url;
-  var filePath = path.join(PUBLIC_DIR, path.normalize(reqPath));
-  if(filePath.indexOf(PUBLIC_DIR) !== 0){ res.writeHead(403); res.end('Forbidden'); return; }
+  if(req.method !== 'GET' || (req.url !== '/' && req.url !== '/index.html')){
+    res.writeHead(404); res.end('Not found'); return;
+  }
+  var filePath = path.join(PUBLIC_DIR, 'index.html');
   fs.readFile(filePath, function(err, data){
     if(err){ res.writeHead(404); res.end('Not found'); return; }
-    var ext = path.extname(filePath);
-    res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
+    res.writeHead(200, { 'Content-Type': MIME['.html'] });
     res.end(data);
   });
 });
