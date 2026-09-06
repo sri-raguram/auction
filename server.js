@@ -29,7 +29,7 @@ function seedPlayers(){
     ['Jitin Jacob'], ['SM Shashank'], ['Balaji Annamalai'], ['Ravindra Kumar'], ['Pravin Nandkumar Zende'], ['Nitin Sharma']
   ].forEach(function(p, i){ add('lot5-'+slug(p[0]), p[0], 'lot5', i); });
   [
-    ['Dristi'], ['Usha'], ['Neeniya'], ['Priyanshi'], ['Pratibha'], ['Keerthana']
+    ['Drishti'], ['Usha'], ['Neeniya'], ['Priyanshi'], ['Pratibha'], ['Keerthana']
   ].forEach(function(p, i){ add('lot6-'+slug(p[0]), p[0], 'lot6', i); });
   return out;
 }

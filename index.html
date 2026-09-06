@@ -280,6 +280,7 @@
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 (function(){
   var CAP = null;
@@ -746,6 +747,56 @@
     });
     return Promise.all(writes);
   }
+  function exportToExcel(){
+    if(typeof XLSX==='undefined'){
+      window.alert('Export unavailable — the Excel export library failed to load. Check your internet connection and try again.');
+      return;
+    }
+    var summaryRows = teamOrder().map(function(id){
+      var t = state.teams[id];
+      return {
+        Team: t.name,
+        'Purse Total (pts)': t.purseTotal,
+        'Purse Spent (pts)': t.purseSpent,
+        'Purse Remaining (pts)': purseRemaining(t),
+        'Squad Size': rosterCount(t)
+      };
+    });
+    var squadRows = [];
+    teamOrder().forEach(function(id){
+      var t = state.teams[id];
+      (t.roster||[]).forEach(function(r){
+        var meta = r.lot==='captain' ? null : lotMeta(r.lot);
+        squadRows.push({
+          Team: t.name,
+          Player: r.name,
+          Lot: r.lot==='captain' ? 'Captain' : (meta ? meta.label : r.lot),
+          'Price Paid (pts)': r.price
+        });
+      });
+    });
+    var playerRows = Object.keys(state.players).map(function(id){
+      var p = state.players[id];
+      var meta = lotMeta(p.lot);
+      return {
+        Player: p.name,
+        Lot: meta ? meta.label : p.lot,
+        Status: p.status,
+        'Sold To': p.soldTo ? state.teams[p.soldTo].name : '',
+        'Price (pts)': p.price==null ? '' : p.price
+      };
+    }).sort(function(a,b){ return a.Lot < b.Lot ? -1 : a.Lot > b.Lot ? 1 : 0; });
+    var activityRows = (state.activity||[]).slice().reverse().map(function(e){
+      return { Time: new Date(e.ts).toLocaleString(), Event: e.text };
+    });
+
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryRows), 'Summary');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(squadRows), 'Full Squads');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(playerRows), 'All Players');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(activityRows), 'Activity Log');
+    XLSX.writeFile(wb, 'Tecnical-Cricket-Championship-2026-Auction-Results.xlsx');
+  }
   function resetAuction(){
     showConfirm(
       'Reset the entire auction?',
@@ -1038,6 +1089,7 @@
       primaryControl = '<button class="btn btn-line" data-action="next-player">Next Player →</button>';
     }
     var controls = '<div style="display:flex;flex-direction:column;gap:8px;align-items:stretch;">'+primaryControl+
+      '<button class="btn btn-line" style="font-size:12px;padding:8px 14px;" data-action="export-excel">Export to Excel</button>'+
       '<button class="btn btn-danger-line" style="font-size:12px;padding:8px 14px;" data-action="reset-auction">Reset Auction</button></div>';
 
     var lotControl;
@@ -1228,6 +1280,7 @@
     else if(action==='undo-last') undoLast();
     else if(action==='shuffle-queue') shuffleQueue();
     else if(action==='reset-auction') resetAuction();
+    else if(action==='export-excel') exportToExcel();
     else if(action==='toggle-tts') toggleTts();
   });
 
