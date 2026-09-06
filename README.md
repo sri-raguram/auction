@@ -1,4 +1,4 @@
-# Corporate Premier League — Auction Server
+# Tecnical Cricket Championship 2026 — Auction Server
 
 A single Node server (no dependencies) that serves the auction app and holds
 the shared live data (teams, players, bids, purses) for the day.

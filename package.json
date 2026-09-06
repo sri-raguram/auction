@@ -2,7 +2,7 @@
   "name": "cpl-auction",
   "version": "1.0.0",
   "private": true,
-  "description": "Corporate Premier League live auction server",
+  "description": "Tecnical Cricket Championship 2026 live auction server",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

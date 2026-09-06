@@ -38,11 +38,11 @@ function slug(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+
 function seedTeams(){
   var defs = [
     ['ashwin-selva','Ashwin Selva','t-blue','9257'],
-    ['ajay-p','Ajay P','t-orange','5078'],
     ['s-balamurugan','S Balamurugan','t-green','8510'],
     ['ajith-lazer','Ajith Lazer','t-purple','1289'],
     ['gopinath-ragavan','Gopinath Ragavan','t-teal','8195'],
-    ['punith-g','Punith G','t-amber','5634']
+    ['punith-g','Punith G','t-amber','5634'],
+    ['ajay-p','Ajay P','t-orange','5078']
   ];
   var out = {};
   defs.forEach(function(d, i){
@@ -91,8 +91,22 @@ try {
   console.log('Starting with a fresh seeded store');
 }
 
+var persistWriteInProgress = false;
+var persistPending = false;
 function persist(){
-  fs.writeFile(DB_FILE, JSON.stringify(store), function(){});
+  persistPending = true;
+  if(persistWriteInProgress) return;
+  flushPersist();
+}
+function flushPersist(){
+  persistPending = false;
+  persistWriteInProgress = true;
+  var snapshot = JSON.stringify(store);
+  fs.writeFile(DB_FILE, snapshot, function(err){
+    persistWriteInProgress = false;
+    if(err) console.error('persist error:', err);
+    if(persistPending) flushPersist();
+  });
 }
 
 var sseClients = [];
@@ -176,5 +190,5 @@ setInterval(function(){
 }, 20000);
 
 server.listen(PORT, function(){
-  console.log('Corporate Premier League auction server running on http://localhost:' + PORT);
+  console.log('Tecnical Cricket Championship 2026 auction server running on http://localhost:' + PORT);
 });
