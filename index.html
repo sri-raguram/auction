@@ -789,9 +789,19 @@
     var activityRows = (state.activity||[]).slice().reverse().map(function(e){
       return { Time: new Date(e.ts).toLocaleString(), Event: e.text };
     });
+    var rosterHeader = teamOrder().map(function(id){ return state.teams[id].name; });
+    var maxRosterLen = Math.max.apply(null, teamOrder().map(function(id){ return (state.teams[id].roster||[]).length; }).concat([0]));
+    var rosterAoa = [rosterHeader];
+    for(var r=0; r<maxRosterLen; r++){
+      rosterAoa.push(teamOrder().map(function(id){
+        var roster = state.teams[id].roster||[];
+        return roster[r] ? roster[r].name : '';
+      }));
+    }
 
     var wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryRows), 'Summary');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rosterAoa), 'Team Rosters');
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(squadRows), 'Full Squads');
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(playerRows), 'All Players');
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(activityRows), 'Activity Log');
