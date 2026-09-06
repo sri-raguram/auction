@@ -466,11 +466,36 @@
     if(!('speechSynthesis' in window)) return;
     try{ window.speechSynthesis.speak(new SpeechSynthesisUtterance('')); }catch(e){}
   }
+  var cachedVoices = [];
+  function refreshVoices(){
+    try{ cachedVoices = window.speechSynthesis.getVoices() || []; }catch(e){}
+  }
+  if('speechSynthesis' in window){
+    refreshVoices();
+    window.speechSynthesis.onvoiceschanged = refreshVoices;
+  }
+  var KNOWN_MALE_INDIAN_VOICE_NAMES = /rishi|prabhat|hemant/i;
+  var KNOWN_FEMALE_INDIAN_VOICE_NAMES = /veena|neerja|lekha|priya|divya|swara|heera|kajal|female/i;
+  function pickIndianVoice(){
+    if(!cachedVoices.length) refreshVoices();
+    var enIn = cachedVoices.filter(function(v){ return v.lang && v.lang.toLowerCase().indexOf('en-in')===0; });
+    if(enIn.length){
+      var female = enIn.find(function(v){ return KNOWN_FEMALE_INDIAN_VOICE_NAMES.test(v.name); })
+        || enIn.find(function(v){ return !KNOWN_MALE_INDIAN_VOICE_NAMES.test(v.name); });
+      return female || enIn[0];
+    }
+    var byName = cachedVoices.find(function(v){ return /india|rishi|veena|neerja/i.test(v.name); });
+    if(byName) return byName;
+    return null;
+  }
   function speak(text, interrupt){
     if(role.type!=='public' || !ttsEnabled) return;
     if(!('speechSynthesis' in window)) return;
     if(interrupt) window.speechSynthesis.cancel();
     var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-IN';
+    var v = pickIndianVoice();
+    if(v) u.voice = v;
     u.rate = 1.02;
     window.speechSynthesis.speak(u);
   }
@@ -1067,10 +1092,10 @@
       var rows = players.map(function(id){
         var p = state.players[id];
         var color = p.status==='sold' ? 'var(--success)' : p.status==='unsold' ? 'var(--text-faint)' : p.status==='current' ? 'var(--live)' : 'var(--text-faint)';
-        var metaText = p.status==='sold' ? (state.teams[p.soldTo].name+' · '+money(p.price)) : p.status==='unsold' ? 'Unsold' : p.status==='current' ? 'On the block' : 'base '+money(meta.basePrice);
-        var clickable = p.status==='queued' ? ' data-action="set-current" data-id="'+id+'" style="cursor:pointer;"' : '';
+        var metaText = p.status==='sold' ? (state.teams[p.soldTo].name+' · '+money(p.price)) : p.status==='unsold' ? 'Unsold · tap to reopen' : p.status==='current' ? 'On the block' : 'base '+money(meta.basePrice);
+        var clickable = (p.status==='queued' || p.status==='unsold') ? ' data-action="set-current" data-id="'+id+'" style="cursor:pointer;" title="Bring back onto the block"' : '';
         return '<div class="queue-row"'+clickable+'><span class="queue-status" style="background:'+color+';"></span>'+
-          '<div style="flex:1;min-width:0;"><div style="font-size:14px;'+(p.status==='sold'||p.status==='unsold'?'opacity:0.6;':'')+'">'+esc(p.name)+'</div>'+
+          '<div style="flex:1;min-width:0;"><div style="font-size:14px;'+(p.status==='sold'?'opacity:0.6;':'')+'">'+esc(p.name)+'</div>'+
           '<div class="queue-meta">'+esc(metaText)+'</div></div></div>';
       }).join('');
       return '<div style="margin-bottom:10px;"><div style="font-size:12px;letter-spacing:0.07em;color:var(--text-faint);padding:14px 10px 4px;display:flex;align-items:center;gap:6px;">'+lotIconSvg(meta.icon,12)+esc(meta.label).toUpperCase()+'</div>'+rows+'</div>';
